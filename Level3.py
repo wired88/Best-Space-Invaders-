@@ -1,4 +1,5 @@
 import pygame
+from pygame import mixer
 from GameClasses import GameWindow, Explosion
 from MotherClasses import Spaceships, Bullet
 import math
@@ -22,7 +23,8 @@ class Endboss(Spaceships):
         speed_y = 1
         image_size_x = 450
         image_size_y = 450
-        super().__init__(image, speed, lives, shoot_count, x, y, cooldown, 4, speed_y, image_size_x, image_size_y)
+        sound = 'death-star_shoot_sound.mp3'
+        super().__init__(image, speed, lives, shoot_count, x, y, cooldown, 4, sound, speed_y, image_size_x, image_size_y)
         self.get_aliens = True
 
     def draw(self, surface, print_counter):
@@ -101,7 +103,8 @@ class TieFighter(Spaceships):
         image = list[self.index]
         cooldown = 800
         speed_y = 1
-        super().__init__(image, speed, lives, shoot_count, x, y, cooldown, direction, speed_y)
+        sound = 'tie_shoot_better.mp3'
+        super().__init__(image, speed, lives, shoot_count, x, y, cooldown, direction, sound, speed_y)
         self.plus_angle = plus_angle
         self.counter = 0
         self.angle = 0
@@ -127,15 +130,18 @@ class TieFighter(Spaceships):
         if not 1000 >= self.rect.x > -200:
             self.kill()
 
-    def shoot(self, current_time, h_group, bullet_group):
+    def shoot(self, current_time, h_group, bullet_group, volume):
         if current_time - self.last_shot > self.shoot_count:
+            shooting_sound = mixer.Sound(f'sounds/{self.sound}')
+            shooting_sound.set_volume(volume)
+            shooting_sound.play()
             bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi / self.direction, 10,
                             self.bullet_angle)
             bullet_group.add(bullet)
             if current_time - self.last_shot > self.cooldown:
                 self.last_shot = current_time
 
-
+# shoot muss nicht verändert werden (soweit umschreiben!)
 class TieFighterRight(TieFighter):
     def __init__(self, x, y):
         list = [f'tie_r/tie{1}.png',
