@@ -1,24 +1,24 @@
 import pygame
-
+from pygame import mixer
 from GameClasses import GameWindow
-from MenuClasses import MenuWindow, LevelWindow, HighScoreWindow
+from MenuClasses import MenuWindow, LevelWindow, HighScoreWindow, SettingsWindow
 from Level3 import LevelThreeWindow
 
 # Todo morgen
 # - score reaparieren
-# - sounds zuende einfügen
-# manche vereinzelte aliens sterben nicht
+
 level_window = LevelWindow()
 high_score_window = HighScoreWindow()
 main_menu_window = MenuWindow()
 game_window = GameWindow('Space Invaders', 'vortex.png')
 level_three_game_window = LevelThreeWindow('ENDLEVEL', 'blue_nebula.png')
+setting_window = SettingsWindow()
 
 window_group = pygame.sprite.Group()
-window_group.add(main_menu_window, high_score_window, level_window, game_window, level_three_game_window)
+window_group.add(main_menu_window, high_score_window, level_window, game_window, level_three_game_window, setting_window)
 
 pygame.init()
-
+mixer.init(44100, -16, 2, 2048)
 clock = pygame.time.Clock()
 
 menu = True
@@ -40,7 +40,8 @@ while menu:
                           high_score_window,
                           main_menu_window,
                           game_window,
-                          level_three_game_window)
+                          level_three_game_window,
+                          setting_window)
 
     pygame.display.update()
 
