@@ -1,4 +1,6 @@
 import math
+import random
+
 import pygame
 from pygame import mixer
 
@@ -41,7 +43,7 @@ class Window(pygame.sprite.Sprite):
         self.group.draw(self.screen)
         self.spaceship_group.draw(self.screen)
 
-    def update(self, m_pos, current_time, lvl_window, hs_window, menu_window, game_window, level_three_window):
+    def update(self, m_pos, current_time, lvl_window, hs_window, menu_window, game_window, level_three_window, setting_window):
         for sprite in self.spaceship_group.sprites():
             sprite.update(current_time)
         self.back_button.update(m_pos, menu_window, game_window, level_three_window)
@@ -50,7 +52,10 @@ class Window(pygame.sprite.Sprite):
             self.window_open = False
             self.back_button.action = False
 
-
+    def change_screen_boolians(self, clicked_window, clicked_button):
+        clicked_window.window_open = True
+        clicked_button.action = False
+        return False
 class BackGroundSpaceships(pygame.sprite.Sprite):
     def __init__(self, x, y, image, spaceship_size_x, spaceship_size_y, flight_count, speedx, speedy):
         super().__init__()
@@ -94,6 +99,24 @@ class TFighterBG(BackGroundSpaceships):
         super().__init__(x, y, image, spaceship_size_x, spaceship_size_y, flight_count, speedx, speedy)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class XWing(BackGroundSpaceships):
     def __init__(self):
         x = 600
@@ -132,13 +155,11 @@ class Buttons(pygame.sprite.Sprite):
 
     def update(self, m_pos, menu_window, game_window, level_three_window, empty_groups=None,
                group_l=None, explosion_group=None, extra_posx=0, extra_posy=0):
-        self.sound = mixer.init(44100, -16, 2, 2048)
-        self.sound = mixer.Sound('sounds/button_click_ogg.ogg')
-        if self.rect.collidepoint(m_pos):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
-                self.sound.play()
-                self.clicked = True
-                self.action = True
+        sound = mixer.Sound('sounds/button_click_ogg.ogg')
+        if self.rect.collidepoint(m_pos) and pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
+            sound.play()
+            self.clicked = True
+            self.action = True
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
         return self.action
@@ -201,6 +222,9 @@ class PowerUp(pygame.sprite.Sprite):
         self.check_collision(player, heart_g)
 
 
+
+
+
 class Spaceships(pygame.sprite.Sprite):
     def __init__(self, image, speed, lives, shoot_count, x, y, cooldown, direction, sound, speed_y, image_size_x=64, image_size_y=64):
         super().__init__()
@@ -218,15 +242,16 @@ class Spaceships(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.direction = direction
         self.sound = sound
+        self.lives_index = 0
 
     def draw(self, surface, print_counter):
         pass
 
-    def shoot(self, current_time, h_group, bullet_group):
+    def shoot(self, current_time, h_group, bullet_group, volume):
         if current_time - self.last_shot > self.shoot_count and len(h_group) > 0:
-            self.shooting_sound = mixer.init(44100, -16, 2, 2048)
-            self.shooting_sound = mixer.Sound(f'sounds/{self.sound}')
-            self.shooting_sound.play()
+            shooting_sound = mixer.Sound(f'sounds/{self.sound}')
+            shooting_sound.play()
+            shooting_sound.set_volume(volume)
             bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi/2, 10, 0)
             bullet_group.add(bullet)
             if current_time - self.last_shot > self.cooldown:
@@ -249,14 +274,13 @@ class Spaceships(pygame.sprite.Sprite):
             func()
             spaceship.dead = True
 
-    def update(self, surface, current_time, func, h_group, game_score, explosion_group, group, bullet_group, enemy_bullet_group, spaceship):
+    def update(self, surface, volume, current_time, func, h_group, game_score, explosion_group, group, bullet_group, enemy_bullet_group, spaceship):
         game_score = self.check_collision(h_group, game_score, spaceship, explosion_group, enemy_bullet_group, group)
-        self.shoot(current_time, h_group, bullet_group)
+        self.shoot(current_time, h_group, bullet_group, volume)
         self.move(func, spaceship, surface, explosion_group, group)
         return game_score
 
     def check_collision(self, h_group, game_score, player, explosion_group, enemy_bullet_group, group):
-        #self.check_live(group, explosion_group)
         game_score = game_score
         explosion = Explosion(self.rect.centerx, self.rect.centery, 1)
         if pygame.sprite.collide_mask(self, player):
@@ -267,18 +291,21 @@ class Spaceships(pygame.sprite.Sprite):
             self.kill()
         for bullet in enemy_bullet_group.sprites():
             if pygame.sprite.collide_mask(self, bullet):
+                self.lives_index += 1
                 explosion_small = Explosion(bullet.rect.centerx, bullet.rect.centery, 1)
                 explosion_group.add(explosion_small)
                 bullet.kill()
-                print(game_score)
                 game_score += 1
                 self.lives -= 1
                 if self.lives == 0:
-                    self.kill()
+                    self.check_live()
         return game_score
 
-    def check_live(self, group, explosion_group):
-        pass
+    def check_live(self):
+        self.rect.x = random.randint(0, 736)
+        self.rect.y = random.randint(-130, -60)
+        self.lives += self.lives_index
+        self.lives_index = 0
 
 
 class BackButton(Buttons):
