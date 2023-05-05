@@ -134,11 +134,14 @@ class Buttons(pygame.sprite.Sprite):
                group_l=None, explosion_group=None, extra_posx=0, extra_posy=0):
         self.sound = mixer.init(44100, -16, 2, 2048)
         self.sound = mixer.Sound('sounds/button_click_ogg.ogg')
-        if self.rect.collidepoint(m_pos):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
-                self.sound.play()
-                self.clicked = True
-                self.action = True
+        if (
+            self.rect.collidepoint(m_pos)
+            and pygame.mouse.get_pressed()[0] == 1
+            and not self.clicked
+        ):
+            self.sound.play()
+            self.clicked = True
+            self.action = True
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
         return self.action

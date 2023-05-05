@@ -107,13 +107,13 @@ class MenuWindow(Window):
                 hs_window.window_open = True
                 self.high_score_button.action = False
             if self.fast_game_button.action:
-                for enemy in range(7):
+                for _ in range(7):
                     game_window.enemy_group.add(NormalEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-                for enemy in range(1):
+                for _ in range(1):
                     game_window.enemy_group.add(SpeedEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-                for enemy in range(0):
+                for _ in range(0):
                     game_window.enemy_group.add(BossSpaceship(random.randint(0, 736), 50))
 
                 for heart in range(3):
