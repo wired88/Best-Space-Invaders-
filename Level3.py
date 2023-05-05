@@ -68,11 +68,14 @@ class Endboss(Spaceships):
                 game_score += 1
                 self.lives -= 1
         explosion_normal_size = Explosion(spaceship.rect.centerx, spaceship.rect.centery, 2)
-        if pygame.sprite.collide_mask(self, spaceship):
-            if not spaceship.shield_bool and len(h_group) > 0:
-                h_group.sprites()[-1].kill()
-                spaceship.lives -= 1
-                explosion_group.add(explosion_normal_size)
+        if (
+            pygame.sprite.collide_mask(self, spaceship)
+            and not spaceship.shield_bool
+            and len(h_group) > 0
+        ):
+            h_group.sprites()[-1].kill()
+            spaceship.lives -= 1
+            explosion_group.add(explosion_normal_size)
         return game_score
 
     def check_live(self, group, explosion_group):
@@ -138,10 +141,7 @@ class TieFighter(Spaceships):
 
 class TieFighterRight(TieFighter):
     def __init__(self, x, y):
-        list = [f'tie_r/tie{1}.png',
-                f'tie_r/tie{2}.png',
-                f'tie_r/tie{3}.png',
-                f'tie_r/tie{4}.png']
+        list = ['tie_r/tie1.png', 'tie_r/tie2.png', 'tie_r/tie3.png', 'tie_r/tie4.png']
         speed = -2
         plus_angle = -4
         direction = -0.9
@@ -151,10 +151,7 @@ class TieFighterRight(TieFighter):
 
 class TieFighterLeft(TieFighter):
     def __init__(self, x, y):
-        list = [f'tie_l/tie{1}.png',
-                f'tie_l/tie{2}.png',
-                f'tie_l/tie{3}.png',
-                f'tie_l/tie{4}.png']
+        list = ['tie_l/tie1.png', 'tie_l/tie2.png', 'tie_l/tie3.png', 'tie_l/tie4.png']
         speed = 2
         plus_angle = 4
         direction = 4

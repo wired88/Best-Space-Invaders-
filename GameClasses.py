@@ -134,7 +134,6 @@ class GameWindow(Window):
 
     def draw(self, m_pos):
         super().draw(m_pos)
-        yellow = (255, 134, 31)
         self.change_y_screen_image = self.seamless_background(self.change_y_screen_image, self.image, self.height,
                                                               self.screen)
         if not self.name_field.action:
@@ -169,11 +168,17 @@ class GameWindow(Window):
 
             self.player_spaceship.draw(self.screen, self.print_newhs_score_counter)
 
-            self.print_newhs_score_counter("freesansbold.ttf", 16, "Punkte: " + str(self.score), (155, 200, 255),
-                                           (8, 8),
-                                           self.screen)
+            self.print_newhs_score_counter(
+                "freesansbold.ttf",
+                16,
+                f"Punkte: {str(self.score)}",
+                (155, 200, 255),
+                (8, 8),
+                self.screen,
+            )
 
             if self.score > int(self.high_score):
+                yellow = (255, 134, 31)
                 self.print_newhs_score_counter('Starjedi.ttf', 10, 'New Record!', yellow, (8, 20), self.screen)
 
     def empty_all_groups(self, group_l, explosion_group):
@@ -201,9 +206,9 @@ class GameWindow(Window):
         if len(group) == 2 and self.more_enemies:
             # add more enemies
             self.index += 1
-            for enemy in range(9 + self.index):
+            for _ in range(9 + self.index):
                 group.add(NormalEnemy(random.randint(0, 736), random.randint(-130, -60)))
-            for enemy in range(0 + self.index):
+            for _ in range(0 + self.index):
                 group.add(SpeedEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
     # print methods
@@ -232,7 +237,7 @@ class GameWindow(Window):
     def print_mission_complete(self, surface):
         win_font = pygame.font.Font("freesansbold.ttf", 64)
         win_font2 = pygame.font.Font("freesansbold.ttf", 48)
-        win_text = win_font.render(f"Mission Complete", True, (153, 204, 0))
+        win_text = win_font.render("Mission Complete", True, (153, 204, 0))
         win_text2 = win_font2.render("Möchtest du noch eine Runde spielen?", True, (204, 204, 255))
         surface.blit(win_text, (350, 250))
         surface.blit(win_text2, (350, 350))
@@ -241,7 +246,9 @@ class GameWindow(Window):
         go_font = pygame.font.Font("freesansbold.ttf", 64)
         go_text = go_font.render("GAME OVER", True, (255, 255, 255))
         score_font1 = pygame.font.Font("freesansbold.ttf", 16)
-        go_text_score = score_font1.render("Dein Punktestand: " + str(game_score), True, (100, 200, 10))
+        go_text_score = score_font1.render(
+            f"Dein Punktestand: {str(game_score)}", True, (100, 200, 10)
+        )
         surface.blit(go_text, (200, 150))
         surface.blit(go_text_score, (325, 250))
 
@@ -419,14 +426,14 @@ class PlayerSpaceship(Spaceships):
             if not self.double_shoot:
                 bullet = Bullet(self.rect.centerx, self.rect.top, "laser.png", math.pi / 2, -10, 0)
                 bullet_group.add(bullet)
-                self.last_shot = current_time
             else:
                 bullet_double_shoot = Bullet(self.rect.left, self.rect.top, "laser.png", math.pi / 2, -10, 0)
                 bullet_double_shoot2 = Bullet(self.rect.right, self.rect.top, "laser.png", math.pi / 2, -10, 0)
                 bullet_group.add(bullet_double_shoot)
                 bullet_group.add(bullet_double_shoot2)
                 self.amo -= 2
-                self.last_shot = current_time
+
+            self.last_shot = current_time
 
     def check_collision(self, h_group, game_score, spaceship, explosion_group, enemy_bullet_group, group):
         if pygame.sprite.spritecollide(self, enemy_bullet_group, True) and not self.shield_bool and len(h_group) > 0:
@@ -466,11 +473,10 @@ class PlayerSpaceship(Spaceships):
             surface.blit(self.rotated_image, (self.rect.x, self.rect.y))
             self.move_x(self.move_choice)
             self.move_y(self.move_choice)
-        else:
-            if len(explosion_group) == 0 and self.z:
-                explosion_group.add(explosion)
-                explosion_group.add(huge_explosion)
-                self.z = False
+        elif len(explosion_group) == 0 and self.z:
+            explosion_group.add(explosion)
+            explosion_group.add(huge_explosion)
+            self.z = False
 
     def add_shoot_bar(self):
         self.amo = 200
