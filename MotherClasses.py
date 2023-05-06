@@ -56,6 +56,8 @@ class Window(pygame.sprite.Sprite):
         clicked_window.window_open = True
         clicked_button.action = False
         return False
+
+
 class BackGroundSpaceships(pygame.sprite.Sprite):
     def __init__(self, x, y, image, spaceship_size_x, spaceship_size_y, flight_count, speedx, speedy):
         super().__init__()
@@ -97,24 +99,6 @@ class TFighterBG(BackGroundSpaceships):
         speedx = -5
         speedy = 2
         super().__init__(x, y, image, spaceship_size_x, spaceship_size_y, flight_count, speedx, speedy)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class XWing(BackGroundSpaceships):
@@ -249,8 +233,7 @@ class Spaceships(pygame.sprite.Sprite):
 
     def shoot(self, current_time, h_group, bullet_group, volume):
         if current_time - self.last_shot > self.shoot_count and len(h_group) > 0:
-            shooting_sound = mixer.Sound(f'sounds/{self.sound}')
-            shooting_sound.play()
+            shooting_sound = mixer.Sound(f'sounds/{self.sound}').play()
             shooting_sound.set_volume(volume)
             bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi/2, 10, 0)
             bullet_group.add(bullet)
@@ -341,6 +324,10 @@ class Bullet(pygame.sprite.Sprite):  # 13
         self.direction = direction
         self.image = pygame.transform.rotate(self.image, self.angle)
 
+        self.bullet_transform = 7
+        self.beam_lengh = 0
+        self.beam = False
+
     def update(self):  # 14
         new_x = self.rect.x + (self.speed * math.cos(self.direction))
         new_y = self.rect.y + (self.speed * math.sin(self.direction))
@@ -348,6 +335,21 @@ class Bullet(pygame.sprite.Sprite):  # 13
         self.rect.y = new_y
         if self.rect.bottom < 0 or self.rect.bottom > 800 or self.rect.x > 800 or self.rect.x < -30:
             self.kill()
+
+    def update_laser_beam(self, enemy):
+        self.beam_lengh += self.bullet_transform
+        self.image = pygame.transform.scale(self.image, (30, self.beam_lengh))
+        if self.beam_lengh < 600:
+            self.rect.x, self.rect.y = enemy.rect.centerx, enemy.rect.centery
+        elif self.beam_lengh > 600:
+            self.speed = 10
+            self.beam_lengh = 0
+
+
+
+
+
+
 
 
 class Explosion(pygame.sprite.Sprite):
