@@ -6,6 +6,7 @@ from Level3 import LevelThreeWindow
 
 # Todo morgen
 # - score reaparieren
+# shoot boss pygame transform.scale
 
 level_window = LevelWindow()
 high_score_window = HighScoreWindow()
