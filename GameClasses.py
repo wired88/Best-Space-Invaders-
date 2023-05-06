@@ -17,7 +17,11 @@ class GameWindow(Window):
         self.name_field = Name()
         self.pause = Pause()
 
-        self.group_names = ['enemy_group', 'heart_group', 'powerup_group', 'explosion_group', 'player_bullet_group',
+        self.group_names = ['enemy_group',
+                            'heart_group',
+                            'powerup_group',
+                            'explosion_group',
+                            'player_bullet_group',
                             'enemy_bullet_group',
                             'player_group']
 
@@ -371,11 +375,57 @@ class BossSpaceship(Spaceships):
         image = "death-star.png"
         speed = 1
         lives = 3
-        shoot_count = 600
+        shoot_count = 2000
         cooldown = 2000
         speed_y = 100
         sound = 'death-star_shoot_sound.mp3'
         super().__init__(image, speed, lives, shoot_count, x, y, cooldown, 2, sound, speed_y)
+
+
+    def shoot(self, current_time, h_group, bullet_group, volume):
+        bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi / 2, 0, 0)
+        if current_time - self.last_shot > self.shoot_count and len(h_group) > 0 and not bullet.beam:
+            shooting_sound = mixer.Sound(f'sounds/{self.sound}').play()
+            shooting_sound.set_volume(volume)
+            bullet_group.add(bullet)
+            bullet.beam = True
+        if bullet.beam:
+            bullet.update_laser_beam(self)
+            self.last_shot = current_time
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def _update_beam(self, sprite, bullet, current_time):
+        self.beam_lengh += self.bullet_transform
+        sprite.image = pygame.transform.scale(bullet.image, (30, self.beam_lengh))
+        if self.beam_lengh < 600:
+            sprite.rect.x, sprite.rect.y = self.rect.centerx, self.rect.centery
+        elif self.beam_lengh > 600:
+            sprite.speed = 10
+            self.beam_lengh = 0
+            self.shoot_q = False
+        self.last_shot = current_time
 
 
 class PlayerSpaceship(Spaceships):
@@ -420,6 +470,7 @@ class PlayerSpaceship(Spaceships):
 
         if self.shield_bool:
             self.shield_counter_update(current_time)
+            self.shield_group.update(self)
 
     def shield_counter_update(self, current_time):
         if current_time - self.last_up > 1000:
