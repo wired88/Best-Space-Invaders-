@@ -95,7 +95,7 @@ class VolumeButton(Buttons):
     def draw(self, m_pos, surface):
         x, y = pygame.mouse.get_pos()
         surface.blit(self.bg_image, (self.rect.x + self.plus_vecx, self.rect.y + self.plus_vecy))
-        if self.rect.collidepoint(m_pos):
+        if self.rect.collidepoint(m_pos) and x > self.rect.x:
             self.bg_image = pygame.transform.scale(self.bg_image, (0 + x - self.rect.x, 30))
             self.volume = ((x - self.rect.x) / 480)
 
@@ -135,13 +135,13 @@ class MenuWindow(Window):
                 self.window_open = self.change_screen_boolians(hs_window, self.high_score_button)
 
             if self.fast_game_button.action:
-                for _ in range(9):
+                for _ in range(0):
                     game_window.enemy_group.add(NormalEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-                for _ in range(3):
+                for _ in range(0):
                     game_window.enemy_group.add(SpeedEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-                for _ in range(2):
+                for _ in range(1):
                     game_window.enemy_group.add(BossSpaceship(random.randint(0, 736), 50))
 
                 for heart in range(3):
