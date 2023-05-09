@@ -54,6 +54,19 @@ class Endboss(Spaceships):
             if self.rect.x > 300:
                 self.speed = 0
 
+    def shoot(self, current_time, h_group, bullet_group, volume):
+        bullet = Bullet(self.rect.centerx, self.rect.bottom, "death-star_laser_final1.png", math.pi / 2, 0, 0)
+        if current_time - self.last_shot > self.shoot_count and len(h_group) > 0 and not bullet.beam:
+            shooting_sound = mixer.Sound(f'sounds/{self.sound}').play()
+            shooting_sound.set_volume(volume)
+            bullet_group.add(bullet)
+            bullet.beam = True
+        for sprite in bullet_group.sprites():
+            if sprite.beam:
+                sprite.update_laser_beam(self, 120, -40, -50)
+                if current_time - self.last_shot > 1000:
+                    self.last_shot = current_time
+
     def draw_health_bar(self, surface):
         red = (255, 0, 0)
         green = (0, 255, 0)
@@ -132,16 +145,14 @@ class TieFighter(Spaceships):
 
     def shoot(self, current_time, h_group, bullet_group, volume):
         if current_time - self.last_shot > self.shoot_count:
-            shooting_sound = mixer.Sound(f'sounds/{self.sound}')
-            shooting_sound.set_volume(volume)
-            shooting_sound.play()
+            self.shooting_sound.play().set_volume(volume)
             bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi / self.direction, 10,
                             self.bullet_angle)
             bullet_group.add(bullet)
             if current_time - self.last_shot > self.cooldown:
                 self.last_shot = current_time
 
-# shoot muss nicht verändert werden (soweit umschreiben!)
+
 class TieFighterRight(TieFighter):
     def __init__(self, x, y):
         list = [f'tie_r/tie{1}.png',
