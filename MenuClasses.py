@@ -6,7 +6,6 @@ from GameClasses import SpeedEnemy, BossSpaceship, NormalEnemy, Hearts
 from Level3 import Endboss
 
 
-# einzelne Buttons
 
 
 class LevelButton(Buttons):
@@ -79,25 +78,27 @@ class VolumeButton(Buttons):
     def __init__(self):
         x = 400
         y = 200
-        image = "rounded-rectangle.png"
+        image = "rect_vol.png"
         extra_image_sizex = 480
         extra_image_sizey = 60
-        bg_image = "ray_shield.png"
+        bg_image = "ray_shield2.png"
         bgimage_sizex = 480
-        bgimage_sizey = 60
-        text = 'Volume'
+        bgimage_sizey = 27
+        text = 'volume'
         plus_vecx = 0
-        plus_vecy = 0
+        plus_vecy = 18
         super().__init__(x, y, image, extra_image_sizex, extra_image_sizey, bg_image, bgimage_sizex, bgimage_sizey,
                          text, plus_vecx, plus_vecy)
         self.volume = 1
 
     def draw(self, m_pos, surface):
         x, y = pygame.mouse.get_pos()
+        print(x)
         surface.blit(self.bg_image, (self.rect.x + self.plus_vecx, self.rect.y + self.plus_vecy))
-        if self.rect.collidepoint(m_pos) and x > self.rect.x:
-            self.bg_image = pygame.transform.scale(self.bg_image, (0 + x - self.rect.x, 30))
+        if self.rect.collidepoint(m_pos) and x > self.rect.x and x < 631:
+            self.bg_image = pygame.transform.scale(self.bg_image, (0 + x - self.rect.x, 27))
             self.volume = ((x - self.rect.x) / 480)
+        self.draw_text(surface, 27, self.rect.x + 180, self.rect.y + 6, self.text)
 
 
 class MenuWindow(Window):
@@ -110,7 +111,7 @@ class MenuWindow(Window):
         self.high_score_button = HighScoreButton()
         self.fast_game_button = FastGame()
         self.settings_button = SettingsButton()
-        pygame.mixer.init()
+
         self.group.add(self.level_button)
         self.group.add(self.high_score_button)
         self.group.add(self.fast_game_button)
@@ -124,7 +125,6 @@ class MenuWindow(Window):
 
     def update(self, m_pos, current_time, lvl_window, hs_window, menu_window, game_window, level_three_window,
                setting_window):
-
         for sprite in self.group.sprites():
             sprite.action = sprite.update(m_pos, menu_window, game_window, level_three_window, setting_window)
             if self.settings_button.action:
@@ -135,13 +135,13 @@ class MenuWindow(Window):
                 self.window_open = self.change_screen_boolians(hs_window, self.high_score_button)
 
             if self.fast_game_button.action:
-                for _ in range(0):
+                for _ in range(9):
                     game_window.enemy_group.add(NormalEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-                for _ in range(0):
+                for _ in range(4):
                     game_window.enemy_group.add(SpeedEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-                for _ in range(1):
+                for _ in range(2):
                     game_window.enemy_group.add(BossSpaceship(random.randint(0, 736), 50))
 
                 for heart in range(3):
@@ -159,7 +159,6 @@ class MenuWindow(Window):
                 game_window.name_field.action = False
 
 
-
 class SettingsWindow(Window):
     def __init__(self):
         caption = 'Settings'
@@ -172,7 +171,7 @@ class SettingsWindow(Window):
 
     def draw(self, m_pos):
         super().draw(m_pos)
-        self.print_headline((320, 50))
+        self.print_headline((270, 50))
 
 
 class SettingsButton(Buttons):
@@ -198,8 +197,8 @@ class LevelWindow(Window):
         image = "level_bg.jpg"
         window_open = False
         super().__init__(caption, image, window_open)
-        for levels in range(3):
-            self.group.add(ChooseLevelButtons(200 + levels * 200, 300))
+        for levels in range(2):
+            self.group.add(ChooseLevelButtons(300 + levels * 200, 300))
         self.group.add(self.back_button)
 
     def draw(self, m_pos):
@@ -216,24 +215,31 @@ class LevelWindow(Window):
                        setting_window)
         for sprite in self.group.sprites():
             sprite.action = sprite.update(m_pos, menu_window, game_window, level_three_window)
-        if self.group.sprites()[2].action:
-            self._extracted_from_update_9(level_three_window)
+        if self.group.sprites()[1].action:
+            self._window_setup(level_three_window, self.group.sprites()[1], Endboss)
+        if self.group.sprites()[0].action:
+            self._window_setup(game_window, self.group.sprites()[0], BossSpaceship)
+            for _ in range(5):
+                game_window.enemy_group.add(NormalEnemy(random.randint(0, 736), random.randint(-130, -60)))
 
-    def _extracted_from_update_9(self, level_three_window):
-        level_three_window.window_open = True
-        level_three_window.enemy_group.add(Endboss(300, -400))
+            for _ in range(2):
+                game_window.enemy_group.add(SpeedEnemy(random.randint(0, 736), random.randint(-130, -60)))
+
+    def _window_setup(self, window, sprite, Enemy):
+        window.window_open = True
+        window.enemy_group.add(Enemy(300, -400))
 
         for heart in range(3):
             hearts = Hearts(16 + heart * 16, 45)
-            level_three_window.heart_group.add(hearts)
+            window.heart_group.add(hearts)
 
-        level_three_window.player_group.add(level_three_window.player_spaceship)
-        level_three_window.player_spaceship.lives = 3
-        level_three_window.player_spaceship.rect.x = 400
-        level_three_window.player_spaceship.rect.y = 515
-        level_three_window.player_spaceship.dead = False
-        level_three_window.player_spaceship.z = True
-        self.window_open = self.change_screen_boolians(level_three_window, self.group.sprites()[2])
+        window.player_group.add(window.player_spaceship)
+        window.player_spaceship.lives = 3
+        window.player_spaceship.rect.x = 400
+        window.player_spaceship.rect.y = 515
+        window.player_spaceship.dead = False
+        window.player_spaceship.z = True
+        self.window_open = self.change_screen_boolians(window, sprite)
 
 
 class HighScoreWindow(Window):
