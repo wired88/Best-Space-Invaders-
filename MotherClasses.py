@@ -5,9 +5,8 @@ import pygame
 from pygame import mixer
 
 
-class Window(pygame.sprite.Sprite):
-    def __init__(self, caption, image, window_open):
-        super().__init__()
+class Window:
+    def __init__(self, caption, image, window_open, music='main_menu_final_music'):
         self.width = 800
         self.height = 600
         self.change_y_screen_image = 0
@@ -29,6 +28,8 @@ class Window(pygame.sprite.Sprite):
 
         self.spaceship_group.add(self.xwing)
         self.spaceship_group.add(self.tiefighter)
+        self.music = music
+
 
     def print_headline(self, pos):
         orange = (255, 165, 0)
@@ -58,7 +59,7 @@ class Window(pygame.sprite.Sprite):
         return False
 
 
-class BackGroundSpaceships(pygame.sprite.Sprite):
+class BackGroundSpaceships(pygame.sprite.DirtySprite):
     def __init__(self, x, y, image, spaceship_size_x, spaceship_size_y, flight_count, speedx, speedy):
         super().__init__()
         self.x = x
@@ -115,7 +116,7 @@ class XWing(BackGroundSpaceships):
         self.image = pygame.transform.rotate(self.image, 15)
 
 
-class Buttons(pygame.sprite.Sprite):
+class Buttons(pygame.sprite.DirtySprite):
     def __init__(self, x, y, image, extra_image_sizex, extra_image_sizey, bg_image, bgimage_sizex, bgimage_sizey, text, plus_vecx, plus_vecy):
         super().__init__()
         self.x = x
@@ -155,9 +156,8 @@ class Buttons(pygame.sprite.Sprite):
         surface.blit(text, (x, y))
 
 
-########################################################################################################################
-# Game Mother Classes
-class StaticObjects(pygame.sprite.Sprite):
+
+class StaticObjects(pygame.sprite.DirtySprite):
     def __init__(self, image, x, y):
         super().__init__()
         self.x = x
@@ -209,9 +209,10 @@ class PowerUp(pygame.sprite.Sprite):
 
 
 
-class Spaceships(pygame.sprite.Sprite):
+class Spaceships(pygame.sprite.DirtySprite):
     def __init__(self, image, speed, lives, shoot_count, x, y, cooldown, direction, sound, speed_y, image_size_x=64, image_size_y=64):
         super().__init__()
+        mixer.init()
         self.x = x
         self.y = y
         self.speed = speed
@@ -225,7 +226,7 @@ class Spaceships(pygame.sprite.Sprite):
         self.cooldown = cooldown
         self.mask = pygame.mask.from_surface(self.image)
         self.direction = direction
-        self.sound = sound
+        self.shooting_sound = mixer.Sound(f'sounds/{sound}')
         self.lives_index = 0
 
     def draw(self, surface, print_counter):
@@ -233,8 +234,7 @@ class Spaceships(pygame.sprite.Sprite):
 
     def shoot(self, current_time, h_group, bullet_group, volume):
         if current_time - self.last_shot > self.shoot_count and len(h_group) > 0:
-            shooting_sound = mixer.Sound(f'sounds/{self.sound}').play()
-            shooting_sound.set_volume(volume)
+            self.shooting_sound.set_volume(volume).play()
             bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi/2, 10, 0)
             bullet_group.add(bullet)
             if current_time - self.last_shot > self.cooldown:
@@ -257,14 +257,19 @@ class Spaceships(pygame.sprite.Sprite):
             func()
             spaceship.dead = True
 
-    def update(self, surface, volume, current_time, func, h_group, game_score, explosion_group, group, bullet_group, enemy_bullet_group, spaceship):
+    def update(self, surface, volume, current_time, func, h_group,
+               explosion_group, group, bullet_group, enemy_bullet_group, spaceship, game_score):
+
         game_score = self.check_collision(h_group, game_score, spaceship, explosion_group, enemy_bullet_group, group)
+
         self.shoot(current_time, h_group, bullet_group, volume)
+
         self.move(func, spaceship, surface, explosion_group, group)
+
         return game_score
 
     def check_collision(self, h_group, game_score, player, explosion_group, enemy_bullet_group, group):
-        game_score = game_score
+
         explosion = Explosion(self.rect.centerx, self.rect.centery, 1)
         if pygame.sprite.collide_mask(self, player):
             explosion_group.add(explosion)
@@ -278,10 +283,10 @@ class Spaceships(pygame.sprite.Sprite):
                 explosion_small = Explosion(bullet.rect.centerx, bullet.rect.centery, 1)
                 explosion_group.add(explosion_small)
                 bullet.kill()
-                game_score += 1
                 self.lives -= 1
-                if self.lives == 0:
-                    self.check_live()
+        if self.lives == 0:
+            game_score += self.lives_index
+            self.check_live()
         return game_score
 
     def check_live(self):
@@ -336,20 +341,18 @@ class Bullet(pygame.sprite.Sprite):  # 13
         if self.rect.bottom < 0 or self.rect.bottom > 800 or self.rect.x > 800 or self.rect.x < -30:
             self.kill()
 
-    def update_laser_beam(self, enemy):
-        self.beam_lengh += self.bullet_transform
-        self.image = pygame.transform.scale(self.image, (30, self.beam_lengh))
-        if self.beam_lengh < 600:
-            self.rect.x, self.rect.y = enemy.rect.centerx, enemy.rect.centery
-        elif self.beam_lengh > 600:
-            self.speed = 10
-            self.beam_lengh = 0
-
-
-
-
-
-
+    def update_laser_beam(self, enemy, x_transform, extry_x, extra_y):
+        if self.rect.bottom < 600:
+            self.beam_lengh += self.bullet_transform
+            self.image = pygame.transform.scale(self.image, (x_transform, self.beam_lengh))
+            self.rect = self.image.get_rect()
+            self.rect.y = enemy.rect.bottom + extra_y
+        if self.rect.bottom >= 600:
+            self.rect.y += 30
+            self.bullet_transform = -1
+            if self.rect.top > 600:
+                self.beam = False
+        self.rect.x = enemy.rect.centerx + extry_x
 
 
 class Explosion(pygame.sprite.Sprite):
