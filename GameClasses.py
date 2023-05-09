@@ -3,6 +3,8 @@ import random
 import pygame
 from pygame import mixer
 
+
+from MenuClasses import VolumeButton
 from MotherClasses import Window, Spaceships, PowerUp, Buttons, StaticObjects, Bullet, Explosion
 
 
@@ -12,7 +14,7 @@ class GameWindow(Window):
         super().__init__(caption, image, window_open)
 
         self.score = 0
-
+        self.volume = getattr(VolumeButton, 'volume')
         self.player_spaceship = PlayerSpaceship(400, 515)
         self.name_field = Name()
         self.pause = Pause()
@@ -25,10 +27,12 @@ class GameWindow(Window):
                             'enemy_bullet_group',
                             'player_group']
 
-        for name in self.group_names:
-            setattr(self, name, pygame.sprite.Group())
+        self.group_list = []
 
-        self.volume = 100
+        for name in self.group_names:
+            group = pygame.sprite.Group()
+            setattr(self, name, group)
+            self.group_list.append(group)
 
         self.button_group = pygame.sprite.Group(self.pause)
         self.name_group = pygame.sprite.Group(self.name_field)
@@ -54,26 +58,18 @@ class GameWindow(Window):
         self.button_group_list = [self.button_group,
                                   self.name_group]
 
-        self.group_list = [self.enemy_group,
-                           self.heart_group,
-                           self.powerup_group,
-                           self.explosion_group,
-                           self.player_bullet_group,
-                           self.enemy_bullet_group,
-                           self.player_group]
+
 
         with (open('high_score', 'r')) as file:
             self.high_score = int(file.readline(4))
 
     def update(self, m_pos, current_time, lvl_window, hs_window, menu_window, game_window, level_three_window,
                setting_window):
-
         self.spaceship_params = [self.screen,
-                                 setting_window.volume_button.volume,
+                                 self.volume,
                                  current_time,
                                  self.empty_all_groups,
                                  self.heart_group,
-                                 self.score,
                                  self.explosion_group,
                                  self.enemy_group]
 
@@ -99,13 +95,14 @@ class GameWindow(Window):
                 self.score = sprite.update(*self.spaceship_params,
                                            self.enemy_bullet_group,
                                            self.player_bullet_group,
-                                           self.player_spaceship)
-
+                                           self.player_spaceship,
+                                           self.score)
 
             self.player_spaceship.update(*self.spaceship_params,
                                          self.player_bullet_group,
                                          self.enemy_bullet_group,
-                                         self.enemy_group)
+                                         self.enemy_group,
+                                         self.score)
 
             for bullet_group in self.bullet_group_list:
                 bullet_group.update()
@@ -115,9 +112,10 @@ class GameWindow(Window):
 
             if len(self.powerup_group) > 0:
                 self.powerup_group.update(self.player_spaceship,
-                                      self.heart_group,
-                                      current_time,
-                                      self.powerup_group)
+                                          self.heart_group,
+                                          current_time,
+                                          self.powerup_group)
+
             if self.player_spaceship.lives <= 1:
                 self.check_lives_and_enemy_position(self.score,
                                                     self.player_spaceship,
@@ -167,6 +165,9 @@ class GameWindow(Window):
                 for sprite in self.back_group.sprites():
                     sprite.draw(m_pos, self.screen)
 
+            self.player_spaceship.draw(self.screen,
+                                       self.print_newhs_score_counter)
+
             for sprite in self.enemy_group.sprites():
                 sprite.draw(self.screen,
                             self.print_newhs_score_counter)
@@ -175,9 +176,6 @@ class GameWindow(Window):
                 bullet_group.draw(self.screen)
 
             self.player_group.draw(self.screen)
-
-            self.player_spaceship.draw(self.screen,
-                                       self.print_newhs_score_counter)
 
             self.print_newhs_score_counter(
                 "freesansbold.ttf",
@@ -351,7 +349,7 @@ class NormalEnemy(Spaceships):
         shoot_count = 0
         cooldown = 0
         speed_y = 60
-        sound = None
+        sound = 'tie shoot.mp3'
         super().__init__(image, speed, lives, shoot_count, x, y, cooldown, 2, sound, speed_y)
 
     def shoot(self, current_time, group, bullet_group, volume):
@@ -376,56 +374,22 @@ class BossSpaceship(Spaceships):
         speed = 1
         lives = 3
         shoot_count = 2000
-        cooldown = 2000
+        cooldown = 500
         speed_y = 100
         sound = 'death-star_shoot_sound.mp3'
         super().__init__(image, speed, lives, shoot_count, x, y, cooldown, 2, sound, speed_y)
 
-
     def shoot(self, current_time, h_group, bullet_group, volume):
         bullet = Bullet(self.rect.centerx, self.rect.bottom, "death_star_laser1.png", math.pi / 2, 0, 0)
         if current_time - self.last_shot > self.shoot_count and len(h_group) > 0 and not bullet.beam:
-            shooting_sound = mixer.Sound(f'sounds/{self.sound}').play()
-            shooting_sound.set_volume(volume)
+            self.shooting_sound.play().set_volume(volume)
             bullet_group.add(bullet)
             bullet.beam = True
-        if bullet.beam:
-            bullet.update_laser_beam(self)
-            self.last_shot = current_time
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def _update_beam(self, sprite, bullet, current_time):
-        self.beam_lengh += self.bullet_transform
-        sprite.image = pygame.transform.scale(bullet.image, (30, self.beam_lengh))
-        if self.beam_lengh < 600:
-            sprite.rect.x, sprite.rect.y = self.rect.centerx, self.rect.centery
-        elif self.beam_lengh > 600:
-            sprite.speed = 10
-            self.beam_lengh = 0
-            self.shoot_q = False
-        self.last_shot = current_time
+        for sprite in bullet_group.sprites():
+            if sprite.beam:
+                sprite.update_laser_beam(self, 30, -10, -10)
+                if current_time - self.last_shot > self.cooldown:
+                    self.last_shot = current_time
 
 
 class PlayerSpaceship(Spaceships):
@@ -484,11 +448,7 @@ class PlayerSpaceship(Spaceships):
     def shoot(self, current_time, heart_g, bullet_group, volume):
         key = pygame.key.get_pressed()
         if key[pygame.K_SPACE] and current_time - self.last_shot > self.shoot_count and len(heart_g) > 0:
-
-            shooting_sound = mixer.Sound(f'sounds/{self.sound}')
-            shooting_sound.play()
-            shooting_sound.set_volume(volume)
-
+            self.shooting_sound.play().set_volume(volume)
             if not self.double_shoot:
                 bullet = Bullet(self.rect.centerx,
                                 self.rect.top,
@@ -519,12 +479,12 @@ class PlayerSpaceship(Spaceships):
             self.last_shot = current_time
 
     def check_collision(self, h_group, game_score, spaceship, explosion_group, enemy_bullet_group, group):
-        if pygame.sprite.spritecollide(self, enemy_bullet_group, True) and \
-                not self.shield_bool and \
-                len(h_group) > 0:
-            h_group.sprites()[-1].kill()
-            self.lives -= 1
-            explosion_group.add(Explosion(self.rect.x, self.rect.y, 1))
+        for bullet in enemy_bullet_group.sprites():
+            if self.rect.colliderect(bullet) and not self.shield_bool and len(h_group) > 0:
+                bullet.kill()
+                h_group.sprites()[-1].kill()
+                self.lives -= 1
+                explosion_group.add(Explosion(self.rect.x, self.rect.y, 1))
 
     def add_shield(self):
         powerup_shield = PowerUpShieldSpaceship(self.rect.centerx, self.rect.centery)
